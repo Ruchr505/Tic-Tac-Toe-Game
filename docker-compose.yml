@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: tictactoe-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=tictactoe
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tictactoe-backend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongodb
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/tictactoe
+      - JWT_SECRET=your-super-secret-jwt-key
+      - AUTH0_DOMAIN=your-auth0-domain.auth0.com
+      - AUTH0_CLIENT_ID=your-client-id
+      - AUTH0_CLIENT_SECRET=your-client-secret
+      - AUTH0_AUDIENCE=https://tictactoe-api
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: tictactoe-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:3000
+      - VITE_AUTH0_DOMAIN=your-auth0-domain.auth0.com
+      - VITE_AUTH0_CLIENT_ID=your-client-id
+      - VITE_AUTH0_AUDIENCE=https://tictactoe-api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  mongodb_data:
